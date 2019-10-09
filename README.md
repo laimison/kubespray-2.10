@@ -12,6 +12,86 @@ You can get your invite [here](http://slack.k8s.io/)
 -   Supports most popular **Linux distributions**
 -   **Continuous integration tests**
 
+Quick Start by laimison
+-----------
+
+Edit host list:
+
+    atom inventory/mycluster/hosts.ini
+
+On all servers:
+    apt install docker
+
+    lsmod | grep br_netfilter
+    sudo modprobe br_netfilter
+
+    cat /proc/sys/net/ipv4/ip_forward # expect 1
+    cat /proc/sys/net/bridge/bridge-nf-call-iptables # expect 1
+    swapoff -a
+
+Deploy:
+
+    ansible-playbook --flush-cache -i inventory/sample/inventory.ini -v cluster.yml --become --ask-pass
+
+Remove the cluster:
+
+    ansible-playbook --flush-cache -i inventory/sample/inventory.ini -v reset.yml -b --ask-pass
+
+Collect info:
+
+    ansible-playbook -i inventory/sample/inventory.ini --become --ask-pass -e dir=`pwd` scripts/collect-info.yaml
+
+Retry failed job:
+
+    ansible-playbook --flush-cache -i inventory/sample/inventory.ini -v cluster.yml -b --ask-pass --limit @cluster.retry
+
+Deploy sample app:
+
+    alias k='sudo kubectl'
+    k version
+    k create deployment --image nginx my-nginx
+    k scale deployment --replicas 2 my-nginx
+    k expose deployment my-nginx --port=80 --type=NodePort
+    k get pods -o wide
+    k get deployment
+    k get service -o wide
+    curl -s http://10.233.7.229 | grep Welcome
+    curl -s http://node-1:31284 | grep Welcome
+    curl -s http://node-2:31284 | grep Welcome
+    k delete service my-nginx
+    k delete deployment my-nginx
+
+Access to dashboard:
+
+    alias k='sudo kubectl'
+
+    echo 'apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+    name: my-app-user
+    namespace: stage
+    ' > /tmp/serviceaccount
+
+    k create -f /tmp/serviceaccount
+
+    echo 'apiVersion: rbac.authorization.k8s.io/v1
+
+    kind: ClusterRoleBinding
+    metadata:
+    name: my-app-role
+    roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: cluster-admin
+    subjects:
+    - kind: ServiceAccount
+    name: my-app-user
+    namespace: stage
+    ' > /tmp/clusterrolebinding
+
+    k create -f /tmp/clusterrolebinding
+    k describe secret my-app-user-token -n stage
+
 Quick Start
 -----------
 
