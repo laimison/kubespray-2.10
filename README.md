@@ -15,23 +15,41 @@ You can get your invite [here](http://slack.k8s.io/)
 Quick Start by laimison
 -----------
 
+Create instances in Vagrant (three members are needed for etcd)
+    vagrant up k8s-1
+    vagrant up k8s-2
+    vagrant up k8s-3
+
+    vagrant ssh-config
+
+    vagrant status
+
+    ssh -o StrictHostKeyChecking=no  -i ~/.vagrant.d/insecure_private_key vagrant@localhost -p 2222
+    ssh -o StrictHostKeyChecking=no  -i ~/.vagrant.d/insecure_private_key vagrant@localhost -p 2200
+    ssh -o StrictHostKeyChecking=no  -i ~/.vagrant.d/insecure_private_key vagrant@localhost -p 2201
+
 Edit host list:
 
     atom inventory/mycluster/hosts.ini
 
 On all servers:
-    apt install docker
+    # apt install docker
 
     lsmod | grep br_netfilter
     sudo modprobe br_netfilter
 
     cat /proc/sys/net/ipv4/ip_forward # expect 1
     cat /proc/sys/net/bridge/bridge-nf-call-iptables # expect 1
-    swapoff -a
+
+    echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward
+
+    free -m
+
+    sudo swapoff -a
 
 Deploy:
 
-    ansible-playbook --flush-cache -i inventory/sample/inventory.ini -v cluster.yml --become --ask-pass
+    ansible-playbook --flush-cache -i inventory/sample/inventory.ini -v cluster.yml --become # --ask-pass
 
 Remove the cluster:
 
@@ -91,6 +109,10 @@ Access to dashboard:
 
     k create -f /tmp/clusterrolebinding
     k describe secret my-app-user-token -n stage
+
+Destroy vagrant
+
+    vagrant destroy
 
 Quick Start
 -----------
